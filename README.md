@@ -1,2 +1,2 @@
-# -deploy_to_AWS_ECS
+# deploy_to_AWS_ECS
 Just for learning purpose....
