@@ -1,21 +1,30 @@
-FROM ubuntu:focal
+#
+# Nginx Dockerfile
+#
+# https://github.com/dockerfile/nginx
+#
 
-LABEL LABEL "for testing"
+# Pull base image.
+FROM dockerfile/ubuntu
 
-ARG RDS_PRIMARY_ROOT_CA_SRC=https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
-ARG RDS_PRIMARY_ROOT_CA_DEST=/usr/local/share/ca-certificates/rds-ca-2019-root.crt
-ARG RDS_SECONDARY_ROOT_CA_SRC=https://s3.amazonaws.com/rds-downloads/rds-ca-2015-root.pem
-ARG RDS_SECONDARY_ROOT_CA_DEST=/usr/local/share/ca-certificates/rds-ca-2015-root.crt
-
-ENV DEBIAN_FRONTEND=noninteractive
-
+# Install Nginx.
 RUN \
-  echo "**** install apt packages ****" && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates curl vim-tiny gnupg apt-transport-https && \
-  echo "**** update OS repos ****" && \
-    apt-get clean && apt-get update && apt-get dist-upgrade -y && apt-get clean && apt-get autoremove && \
-  echo "**** install AWS RDS root CA ****" && \
-    curl -sL ${RDS_PRIMARY_ROOT_CA_SRC} -o ${RDS_PRIMARY_ROOT_CA_DEST} && chmod 0644 ${RDS_PRIMARY_ROOT_CA_DEST} && \
-    curl -sL ${RDS_SECONDARY_ROOT_CA_SRC} -o ${RDS_SECONDARY_ROOT_CA_DEST} && chmod 0644 ${RDS_SECONDARY_ROOT_CA_DEST} && update-ca-certificates && \
-  echo "**** done ****"
+  add-apt-repository -y ppa:nginx/stable && \
+  apt-get update && \
+  apt-get install -y nginx && \
+  rm -rf /var/lib/apt/lists/* && \
+  echo "\ndaemon off;" >> /etc/nginx/nginx.conf && \
+  chown -R www-data:www-data /var/lib/nginx
+
+# Define mountable directories.
+VOLUME ["/etc/nginx/sites-enabled", "/etc/nginx/certs", "/etc/nginx/conf.d", "/var/log/nginx", "/var/www/html"]
+
+# Define working directory.
+WORKDIR /etc/nginx
+
+# Define default command.
+CMD ["nginx"]
+
+# Expose ports.
+EXPOSE 80
+EXPOSE 443
